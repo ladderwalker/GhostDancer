@@ -3,7 +3,7 @@ BIN=ghostdancer
 all : $(BIN)
 
 $(BIN) : $(wildcard ./src/*.c)
-	gcc -o ./build/$@ $^ -g -lX11 -lpthread -lXinerama -lXext -lGL -lm -ldl 
+	gcc -o ./build/$@ $^ -g -lX11 -lpthread -lXinerama -lXext -lGL -lm -ldl -DCNFGOGL
 
 run :
 	./build/$(BIN)

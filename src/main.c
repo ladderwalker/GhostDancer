@@ -15,6 +15,7 @@
 int __dso_handle;
 //states
 bool blinking = false;
+bool eyesclosed;
 typedef enum {
     closed,AEI,O,Ee,RW,QW,BMP,L,FV,ChJSH,TH
 } mouthstate;
@@ -305,7 +306,7 @@ void DrawRUpperarm(int x,int y){
     if(my > oldmy){
         rotate(upperRarm, 4, x, y, 32);
     } else if(my < oldmy) {
-        rotate(upperRarm, 4, x, y, 58);
+        rotate(upperRarm, 4, x, y, 78);
     } else {
         rotate(upperRarm, 4, x, y, 45);
     }
@@ -327,7 +328,7 @@ void DrawLUpperarm(int x,int y){
     if(my > oldmy){
         rotate(upperLarm, 4, x, y, -32);
     } else if(my < oldmy) {
-        rotate(upperLarm, 4, x, y, -58);
+        rotate(upperLarm, 4, x, y, -78);
     } else {
         rotate(upperLarm, 4, x, y, -45);
     }
@@ -540,7 +541,7 @@ void DrawFigure( int x, int y, size_t tick ) {
     CNFGTackPoly( botrig, 3 );
     CNFGTackRectangle(x + 15,y+30,x+43,y+45 );
     CNFGTackRectangle(x + 57,y+30,x+85,y+45 );
-    if(!blinking)  DrawPupils( x, y );
+    if(!eyesclosed)  DrawPupils( x, y );
     DrawMouth(x,y);     
     //CNFGColor(0xffffffff);
     //CNFGTackPixel(x +  numx, y + numy);
@@ -556,7 +557,14 @@ void HandleKey( int keycode, int bDown ) {
     printf( "Key: %d -> %d\n", keycode, bDown );
 }
 void HandleButton( int x, int y, int button, int bDown ) {
-    if ( button == 1) blinking = true;
+    if ( button == 1) {
+        eyesclosed = true;
+        printf("%d\n",eyesclosed);
+    }
+    if ( button == 3) {
+        eyesclosed = false;
+    }
+    
 }
 void HandleMotion( int x, int y, int mask ) {
     mx = x + MOUSE_OFFSET;
@@ -567,8 +575,11 @@ void HandleDestroy() { }
 
 int main(void)
 { 
+    eyesclosed = false;
     //HideMouseCursor();
-    size_t tick; 
+    size_t tick,tick2;
+    tick =  0;
+    tick2 = 0;
     CNFGSetup( "GhostDancer", 1024, 768 );
     int blinkcount = 0;
     char **buf;
@@ -576,14 +587,25 @@ int main(void)
     while(CNFGHandleInput())
     {
         tick++;
+        tick2++;
+        if(tick2 > 500) {
+            
+            blinking = true;
+            tick2 = 0;
+        }
+        
         CNFGBGColor = 0xff; //Black Background
         short w, h;
         CNFGClearFrame();
         CNFGGetDimensions( &w, &h );
         
-        if(blinking) blinkcount++;
+        if(blinking) {
+            eyesclosed = true;
+            blinkcount++;
+        }
         if (blinkcount > BLINKTIME) {
             blinking = false;
+            eyesclosed = false;
             blinkcount = 0;
         }
         
