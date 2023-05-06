@@ -1,8 +1,11 @@
 #define CNFG_IMPLEMENTATION
-#define CNFGOGL
+//#define CNFGOGL
 #define HAS_XSHAPE
 #define HAS_XINERAMA
 
+#include <X11/Xlib.h>
+
+#include <X11/extensions/Xfixes.h>
 #include <stdbool.h>
 #include <time.h>
 #include "include/rawdraw_sf.h"
@@ -12,7 +15,7 @@
 #define SIN(x) sin(x * 3.141592653589 / 180)
 #define COS(x) cos(x * 3.141592653589 / 180)
 
-int __dso_handle;
+//int __dso_handle;
 //states
 bool blinking = false;
 bool eyesclosed;
@@ -22,7 +25,7 @@ typedef enum {
 
 mouthstate mouth = closed;
 int mx, my, oldmx, oldmy;
-
+float scale;
 void rotate(float a[][2], int n, int x_pivot, int y_pivot,
             int angle)
 {
@@ -50,8 +53,8 @@ void rotate(float a[][2], int n, int x_pivot, int y_pivot,
 
 void DrawMouthA( int x, int y ) {
     
-    RDPoint lips[4]={{x+27,y+70},{x+69,y+70},{x+60,y+87},{x+37,y+87}};
-    RDPoint hole[4]={{x+32,y+72},{x+64,y+72},{x+58,y+84},{x+37,y+84}};
+    RDPoint lips[4]={{x+27 * scale,y+70 * scale},{x+69 * scale,y+70 * scale},{x+60 * scale,y+87 * scale},{x+37 * scale, y+87 * scale}};
+    RDPoint hole[4]={{x+32 * scale,y+72 * scale},{x+64 * scale,y+72 * scale},{x+58 * scale,y+84 * scale},{x+37 * scale,y+84 * scale}};
     
     CNFGColor(0x644e4eff);
     CNFGTackPoly(lips, 4);
@@ -60,17 +63,17 @@ void DrawMouthA( int x, int y ) {
     CNFGTackPoly(hole,4);
     
     CNFGColor(0xffffffff);
-    CNFGTackRectangle(x+38,y+73,x+58,y+75);//teeth
+    CNFGTackRectangle(x+38 * scale,y+73 * scale,x+58 * scale,y+75 * scale);//teeth
     
     CNFGColor(0xff0000ff);
-    CNFGTackRectangle(x+42,y+80,x+54,y+83);//tongue
+    CNFGTackRectangle(x+42 * scale,y+80 * scale,x+54 * scale,y+83 * scale);//tongue
 }
 
 void DrawMouthO( int x, int y ) {
-    int xo= x + 50;
-    int yo= y + 77;
-    int lipr = 15;
-    int r = 12;
+    int xo= x + 50 * scale;
+    int yo= y + 77 * scale;
+    int lipr = 15 * scale;
+    int r = 12 * scale;
     int nPoints = 20;
     
     RDPoint lips[nPoints];
@@ -93,8 +96,8 @@ void DrawMouthO( int x, int y ) {
 
 void DrawMouthE( int x, int y ) {
     
-    RDPoint lips[4]={{x+27,y+70},{x+69,y+70},{x+60,y+87},{x+37,y+87}};
-    RDPoint hole[4]={{x+32,y+72},{x+64,y+72},{x+58,y+84},{x+37,y+84}};
+    RDPoint lips[4]={{x+27 * scale,y+70 * scale},{x+69 * scale,y+70 * scale},{x+60 * scale,y+87 * scale},{x+37 * scale,y+87 * scale}};
+    RDPoint hole[4]={{x+32 * scale,y+72 * scale},{x+64 * scale,y+72 * scale}, {x+58 * scale, y+84 * scale},{x+37 * scale,y+84 * scale}};
     
     CNFGColor(0x644e4eff);
     CNFGTackPoly(lips, 4);
@@ -103,19 +106,19 @@ void DrawMouthE( int x, int y ) {
     CNFGTackPoly(hole,4);
     
     CNFGColor(0xffffffff);
-    CNFGTackRectangle(x+38,y+73,x+58,y+75);//teeth
+    CNFGTackRectangle(x+38 * scale,y+73 * scale,x+58 * scale,y+75 * scale);//teeth
     
     CNFGColor(0xff0000ff);
-    CNFGTackRectangle(x+42,y+77,x+54,y+82);//tongue
+    CNFGTackRectangle(x+42 * scale,y+77 * scale,x+54 * scale,y+82 * scale);//tongue
     
     CNFGColor(0xffffffff);
-    CNFGTackRectangle(x+40,y+80,x+56,y+83);//bottom teeth
+    CNFGTackRectangle(x+40 * scale,y+80 * scale,x+56 * scale,y+83 * scale);//bottom teeth
 }
 
 void DrawMouthRW( int x, int y ) {
     
-    RDPoint lips[6]={{x+23,y+81},{x+40,y+70},{x+60,y+70},{x+77,y+81},{x+60,y+86},{x+38,y+86}};
-    RDPoint hole[6]={{x+29,y+79},{x+40,y+74},{x+59,y+74},{x+70,y+79},{x+59,y+81},{x+40,y+81}};
+    RDPoint lips[6]={{x+23 * scale, y+81 * scale}, {x+40 * scale, y+70 * scale}, {x+60 * scale, y+70 * scale}, {x+77 * scale,y+81 * scale},{x+60 * scale,y+86 * scale},{x+38 * scale,y+86 * scale}};
+    RDPoint hole[6]={{x+29 * scale,y+79 * scale}, {x+40 * scale,y+74 * scale}, {x+59 * scale,y+74 * scale},{x+70 * scale,y+79 * scale},{x+59 * scale,y+81 * scale},{x+40 * scale,y+81 * scale}};
     
     CNFGColor(0x644e4eff);
     CNFGTackPoly(lips, 6);
@@ -124,14 +127,14 @@ void DrawMouthRW( int x, int y ) {
     CNFGTackPoly(hole,6);
     
     CNFGColor(0xffffffff);
-    CNFGTackRectangle(x+36,y+75,x+63,y+76);//teeth
+    CNFGTackRectangle(x+36 * scale,y+75 * scale,x+63 * scale,y+76 * scale);//teeth
 }
 
 void DrawMouthQW( int x, int y ) {
-    int xo = x + 50;
-    int yo = y + 77;
-    int lipr = 10;
-    int r = 7;
+    int xo = x + 50 * scale;
+    int yo = y + 77 * scale;
+    int lipr = 10 * scale;
+    int r = 7 * scale;
     int nPoints = 20;
     
     RDPoint lips[nPoints];
@@ -154,10 +157,10 @@ void DrawMouthQW( int x, int y ) {
 
 void DrawMouthClosed( int x, int y ) {
     CNFGColor(0x644e4eff);
-    CNFGTackRectangle(x+37,y+75,x+62,y+77);//lips
-    CNFGTackSegment(x+38,y+78,x+61,y+78);
+    CNFGTackRectangle(x+37 * scale,y+75 * scale,x+62 * scale,y+77 * scale);//lips
+    //CNFGTackSegment(x+38 * scale,y+78 * scale,x+61 * scale,y+78 * scale);
     CNFGColor(0x000000ff);
-    CNFGTackSegment(x+38,y+76,x+61,y+76);
+    CNFGTackSegment(x+38 * scale,y+76 * scale,x+61 * scale,y+76 * scale);
 }
 
 
@@ -198,20 +201,20 @@ void DrawMouth(int x, int y){
 
 void DrawPupil(int xcen, int ycen) {
     CNFGColor(0xffffffff);
-    CNFGTackRectangle(xcen,ycen,xcen + 23, ycen + 12);
+    CNFGTackRectangle(xcen,ycen,xcen + 23 * scale, ycen + 12 * scale);
     CNFGColor(0x000000ff);
-    CNFGTackRectangle(xcen + 8, ycen + 3, xcen + 15, ycen + 8  );
+    CNFGTackRectangle(xcen + 8 * scale, ycen + 3 * scale, xcen + 15 * scale, ycen + 8 * scale );
 }
 
 void DrawPupils( int x, int y ) {
-    DrawPupil(x + 17, y + 34);
-    DrawPupil(x + 59, y + 34);
+    DrawPupil(x + 17 * scale, y + 34 * scale);
+    DrawPupil(x + 59 * scale, y + 34 * scale);
 }
 void DrawShoulder(int x,int y){
     float xo = (float)x;
     float yo = (float)y;
     
-    float r= 45.0f;
+    float r= 45.0f * scale;
     int nPoints = 20;
     float shoulder[nPoints][2];
     RDPoint rdShoulder[nPoints];
@@ -234,7 +237,7 @@ void DrawHand(int x, int y){
     float xo = (float)x;
     float yo = (float)y;
     
-    float r= 29.0f;
+    float r= 29.0f * scale;
     int nPoints = 20;
     float hand[nPoints][2];
     RDPoint rdHand[nPoints];
@@ -255,7 +258,7 @@ void DrawHand(int x, int y){
 }
 
 void DrawForearm(int x, int y) {
-    float forearm[][2]={{x-28,y},{x+28,y},{x+20,y+80},{x-20,y+80}};
+    float forearm[][2]={{x-28 * scale,y},{x+28 * scale,y},{x+20 * scale,y+80 * scale},{x-20 * scale,y+80 * scale}};
     
     if(my > oldmy){
         rotate(forearm, 4, x, y, 12);
@@ -274,14 +277,14 @@ void DrawForearm(int x, int y) {
     }
     CNFGColor(0xe5b577ff);
     CNFGTackPoly(rdforearm,4);
-    DrawHand(rdforearm[3].x+20, rdforearm[3].y);
+    DrawHand(rdforearm[3].x+20 * scale, rdforearm[3].y);
 }
 
 void DrawElbow(int x,int y){
     float xo = (float)x;
     float yo = (float)y;
     
-    float r= 29.0f;
+    float r= 29.0f * scale;
     int nPoints = 20;
     float elbow[nPoints][2];
     RDPoint rdElbow[nPoints];
@@ -302,7 +305,7 @@ void DrawElbow(int x,int y){
 
 void DrawRUpperarm(int x,int y){
     DrawShoulder(x,y);
-    float upperRarm[][2]={{x+15,y-42},{x+80,y-25},{x+80,y+25},{x+4,y+42}};
+    float upperRarm[][2]={{x+15 * scale,y-42 * scale},{x+80 * scale,y-25 * scale},{x+80 * scale,y+25 * scale},{x+4 * scale,y+42 * scale}};
     if(my > oldmy){
         rotate(upperRarm, 4, x, y, 32);
     } else if(my < oldmy) {
@@ -319,12 +322,12 @@ void DrawRUpperarm(int x,int y){
     CNFGColor(0xe5b577ff);
     CNFGTackPoly(rbicep,4);
     
-    DrawElbow(rbicep[1].x-16, rbicep[1].y+17);
+    DrawElbow(rbicep[1].x-16 * scale, rbicep[1].y+17 * scale);
 }
 
 void DrawLUpperarm(int x,int y){
     DrawShoulder(x,y);
-    float upperLarm[][2]={{x-15,y-42},{x-80,y-25},{x-80,y+25},{x-4,y+42}};
+    float upperLarm[][2]={{x-15 * scale,y-42 * scale},{x-80 * scale,y-25 * scale},{x-80 * scale,y+25 * scale},{x-4 * scale,y+42 * scale}};
     if(my > oldmy){
         rotate(upperLarm, 4, x, y, -32);
     } else if(my < oldmy) {
@@ -341,11 +344,11 @@ void DrawLUpperarm(int x,int y){
     CNFGColor(0xe5b577ff);
     CNFGTackPoly(lbicep,4);
     
-    DrawElbow(lbicep[1].x+16, lbicep[1].y+17);
+    DrawElbow(lbicep[1].x+16 * scale, lbicep[1].y+17 * scale);
 }
 
 void DrawChin(int x, int y){
-    float chin[][2] =  {{x,y},{x+65,y},{x+68,y+100},{x+2,y+100}};
+    float chin[][2] =  {{x,y},{x+65 * scale,y},{x+68 * scale,y+100 * scale},{x+2 * scale,y+100 * scale}};
     if(my > oldmy){
         rotate(chin, 4, x, y,- 12);
     } else if(my < oldmy) {
@@ -373,7 +376,7 @@ void DrawKnee(int x, int y){
     float xo = (float)x;
     float yo = (float)y;
     
-    float r= 34.0f;
+    float r = 34.0f * scale;
     int nPoints = 20;;
     float knee[nPoints][2];
     RDPoint rdKnee[nPoints];
@@ -389,11 +392,11 @@ void DrawKnee(int x, int y){
     }
     CNFGColor(0x0b1766ff);
     CNFGTackPoly(rdKnee, nPoints);
-    DrawChin(x-30, y);
+    DrawChin(x-30 * scale, y);
 }
 
 void DrawLThigh(int x, int y){
-    float thigh[][2] =  {{x,y},{x+70,y},{x+68,y+100},{x+2,y+100}};
+    float thigh[][2] =  {{x,y},{x+70 * scale,y},{x+68 * scale,y+100 * scale},{x+2 * scale,y+100 * scale}};
     if(my > oldmy){
         rotate(thigh, 4, x, y, 12);
     } else if(my < oldmy) {
@@ -413,12 +416,12 @@ void DrawLThigh(int x, int y){
     CNFGColor(0x0b1766ff);
     CNFGTackPoly(rdThigh, 4);
     
-    DrawKnee(rdThigh[3].x+35,rdThigh[3].y);
+    DrawKnee(rdThigh[3].x+35 * scale,rdThigh[3].y);
     
 }
 
 void DrawRThigh(int x, int y){
-    float thigh[][2] =  {{x,y},{x+70,y},{x+68,y+100},{x+2,y+100}};
+    float thigh[][2] =  {{x,y},{x+70 * scale,y},{x+68 * scale,y+100 * scale},{x+2 * scale,y+100 * scale}};
     if(my > oldmy){
         rotate(thigh, 4, x, y, -12);
     } else if(my < oldmy) {
@@ -437,7 +440,7 @@ void DrawRThigh(int x, int y){
     //RDPoint thigh[4] = {{x,y},{x+70,y},{x+60,y+80},{x+10,y+80}};
     CNFGColor(0x0b1766ff);
     CNFGTackPoly(rdThigh, 4);
-    DrawKnee(rdThigh[3].x+35,rdThigh[3].y);
+    DrawKnee(rdThigh[3].x+35 * scale,rdThigh[3].y);
 }
 
 
@@ -445,7 +448,7 @@ void DrawPackage(int x, int y){
     float xo = (float)x;
     float yo = (float)y;
     
-    float r= 29.0f;
+    float r= 29.0f * scale;
     int nPoints = 20;
     float package[nPoints][2];
     RDPoint rdpackage[nPoints];
@@ -475,21 +478,21 @@ void DrawRLeg(int x,int y){
 }
 
 void DrawGroin(int x, int y){
-    RDPoint rdgroin[4] = {{x,y},{x+150,y},{x+150,y+55},{x,y+55}};
+    RDPoint rdgroin[4] = {{x,y},{x+150 * scale,y},{x+150 * scale,y+55 * scale},{x,y+55 * scale}};
     CNFGColor(0x14227aff);
     CNFGTackPoly(rdgroin, 4);
-    DrawPackage(x+75,y+65);
+    DrawPackage(x+75 * scale,y+65 * scale);
 }
 
 void DrawTorso(int x, int y) {
     //DrawGroin(x,y);
     
     //DrawLUpperarm(x,y);
-    int cx = x + 50;
-    int cy = y + 90;
+    int cx = x + 50 * scale;
+    int cy = y + 90 * scale;
     CNFGColor(0x2c0f0eff);//dark maroon
     
-    float ftorso[][2] = {{cx,cy},{cx+100,cy+10},{cx+75,cy+200},{cx-75,cy+200},{cx-100,cy+10}};
+    float ftorso[][2] = {{cx,cy},{cx+100 * scale,cy+10 * scale},{cx+75 * scale,cy+200 * scale},{cx-75 * scale,cy+200 * scale},{cx-100 * scale,cy+10 * scale}};
     if(mx > oldmx+5){
         rotate(ftorso, 5, cx, cy,  3);
     } else if(mx < oldmx-5) {
@@ -503,10 +506,10 @@ void DrawTorso(int x, int y) {
         {(short)ftorso[4][0],(short)ftorso[4][1]}
     };
     CNFGTackPoly(torso,5);
-    DrawRUpperarm(ftorso[1][0]-5, ftorso[1][1]+38);
-    DrawLUpperarm(ftorso[4][0]+5, ftorso[4][1]+38);
-    DrawLLeg(ftorso[3][0], ftorso[3][1]+45);
-    DrawRLeg(ftorso[2][0]-70, ftorso[2][1]+45);
+    DrawRUpperarm(ftorso[1][0]-5 * scale, ftorso[1][1]+38 * scale);
+    DrawLUpperarm(ftorso[4][0]+5 * scale, ftorso[4][1]+38 * scale);
+    DrawLLeg(ftorso[3][0], ftorso[3][1]+45 * scale);
+    DrawRLeg(ftorso[2][0]-70 * scale, ftorso[2][1]+45 * scale);
     DrawGroin(ftorso[3][0], ftorso[3][1]);
     
 }
@@ -515,32 +518,34 @@ void DrawTorso(int x, int y) {
 void DrawFigure( int x, int y, size_t tick ) {
     DrawTorso(x,y);
     srand(tick);
-    for(int r = 0; r<115; r++) {
-        int numx = (rand() % 100);
-        int numy = (rand() % 100);
+    float headsize = 100 * scale; 
+    for(int r = 0; r<115 * scale; r++) {
+        int numx = (rand() % (int)headsize);
+        int numy = (rand() % (int)headsize);
         CNFGColor(0xffffffff);
         CNFGTackPixel(x + numx, y + numy);
         
     }
     srand(tick+2);
-    for(int r = 0; r<150; r++) {
-        int numx = (rand() % 100);
-        int numy = (rand() % 100);
+    for(int r = 0; r<150 * scale; r++) {
+        
+        int numx = (rand() % (int)headsize);
+        int numy = (rand() % (int)headsize);
         CNFGColor(0xff0000ff);
         CNFGTackPixel(x + numx, y + numy);
     }
     
     CNFGColor(0x00000000);
-    RDPoint uplef[3] = {{x,y},{x+25,y},{x,y+30}}; 
-    RDPoint uprig[3] = {{x+75,y},{x+100,y},{x+100,y+30}}; 
-    RDPoint botlef[3] = {{x,y + 75},{x,y + 100},{x + 25,y+100}}; 
+    RDPoint uplef[3] = {{x,y},{x+25* scale,y},{x,y+30* scale}}; 
+    RDPoint uprig[3] = {{x+75* scale,y},{x+100* scale,y},{x+100* scale,y+30* scale}}; 
+    RDPoint botlef[3] = {{x,y + 75* scale},{x,y + 100* scale},{x + 25* scale,y+100* scale}}; 
     RDPoint botrig[3] = {{x + 75,y + 100},{x+100,y + 75},{x + 100,y+100}};
     CNFGTackPoly( uplef, 3 );
     CNFGTackPoly( uprig, 3 );
     CNFGTackPoly( botlef, 3 );
     CNFGTackPoly( botrig, 3 );
-    CNFGTackRectangle(x + 15,y+30,x+43,y+45 );
-    CNFGTackRectangle(x + 57,y+30,x+85,y+45 );
+    CNFGTackRectangle(x + 15* scale,y+30* scale,x+43* scale,y+45 * scale );
+    CNFGTackRectangle(x + 57 * scale,y+30 * scale,x+85 * scale,y+45 * scale );
     if(!eyesclosed)  DrawPupils( x, y );
     DrawMouth(x,y);     
     //CNFGColor(0xffffffff);
@@ -564,6 +569,12 @@ void HandleButton( int x, int y, int button, int bDown ) {
     if ( button == 3) {
         eyesclosed = false;
     }
+    if ( button == 4) {
+        scale *= 1.1f;
+    }
+    if ( button == 5) {
+        scale *= 0.9f;
+    }
     
 }
 void HandleMotion( int x, int y, int mask ) {
@@ -575,17 +586,25 @@ void HandleDestroy() { }
 
 int main(void)
 { 
+    
+    
+    scale = 1.0f;
     eyesclosed = false;
-    //HideMouseCursor();
+    
     size_t tick,tick2;
     tick =  0;
     tick2 = 0;
-    CNFGSetup( "GhostDancer", 1024, 768 );
+    //CNFGSetup( "GhostDancer", 1024, 768 );
+    CNFGSetupFullscreen( "GhostDancer", 0 );
     int blinkcount = 0;
     char **buf;
     int buflen;
+    float fOffset;
+    XFixesHideCursor(CNFGDisplay, CNFGWindow);
     while(CNFGHandleInput())
     {
+        fOffset = 50 * scale;
+        int offset = (int)fOffset;
         tick++;
         tick2++;
         if(tick2 > 500) {
@@ -609,7 +628,7 @@ int main(void)
             blinkcount = 0;
         }
         
-        DrawFigure(mx,my,tick);
+        DrawFigure(mx - offset,my - offset,tick);
         oldmx = mx;
         oldmy = my;
         
