@@ -570,10 +570,18 @@ void HandleButton( int x, int y, int button, int bDown ) {
         eyesclosed = false;
     }
     if ( button == 4) {
-        scale *= 1.1f;
+        if((scale *= 1.1f) > 20.0f) {
+            scale = 20.0f;
+        } else {
+            scale *= 1.1f;
+        }
     }
     if ( button == 5) {
-        scale *= 0.9f;
+        if((scale *= 0.9f) < 0.05f) {
+            scale = 0.05f;
+        } else {
+            scale *= 0.9f;
+        }
     }
     
 }
