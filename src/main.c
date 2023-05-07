@@ -602,7 +602,7 @@ int main(void)
     size_t tick,tick2;
     tick =  0;
     tick2 = 0;
-    CNFGSetup( "GhostDancer", 1024, 768 );
+    CNFGSetup( "GhostDancer", 1440, 1080 );
     //CNFGSetupFullscreen( "GhostDancer", 0 );
     int blinkcount = 0;
     char **buf;
