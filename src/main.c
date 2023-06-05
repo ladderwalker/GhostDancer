@@ -1,3 +1,10 @@
+
+#ifndef USE_SHARED
+#define CNFA_IMPLEMENTATION
+#endif
+#include "include/CNFA.h"
+#define CNFG_IMPLEMENTATION
+
 #define CNFG_IMPLEMENTATION
 //#define CNFGOGL
 #define HAS_XSHAPE
@@ -14,6 +21,66 @@
 #define MOUSE_OFFSET 0
 #define SIN(x) sin(x * 3.141592653589 / 180)
 #define COS(x) cos(x * 3.141592653589 / 180)
+#include <stdio.h>
+#include <math.h>
+#define RUNTIME 500000
+#define SOUNDCBSIZE  8096
+#define MAX_CHANNELS 2
+
+float sound[ SOUNDCBSIZE ];
+int soundhead        = 0;
+int totalframesr = 0;
+int totalframesp = 0;
+int sample_channel = -1;
+float in_amplitude = 1;
+int mouthopen = 0;
+
+void Callback( struct CNFADriver * sd, short * out, short * in, int framesp, int framesr )
+{
+	
+	int channelin = sd->channelsRec;
+	int channelout = sd->channelsPlay;
+    
+	// Load the samples into a ring buffer.  Split the channels from interleved to one per buffer.
+	if ( in )
+	{
+		for ( int i = 0; i < framesr; i++ )
+		{
+			if ( sample_channel < 0 )
+			{
+				float fo = 0;
+				for ( int j = 0; j < channelin; j++ )
+				{
+					float f = in[ i * channelin + j ] / 32767.;
+					if ( f >= -1 && f <= 1 )
+						fo += f;
+					else
+						fo += ( f > 0 ) ? 1 : -1;
+				}
+				fo /= channelin;
+				sound[ soundhead ] = fo * in_amplitude;
+				soundhead = ( soundhead + 1 ) % SOUNDCBSIZE;
+			}
+			else
+			{
+				float f = in[ i * channelin + sample_channel ] / 32767.;
+				if ( f > 1 || f < -1 ) f = ( f > 0 ) ? 1 : -1;
+				sound[ soundhead ] = f * in_amplitude;
+				soundhead = ( soundhead + 1 ) % SOUNDCBSIZE;
+			}
+			if(sound[soundhead - 1] >= 0){
+				if(sound[soundhead - 1] > 0.25f) { mouthopen = 1; } else { mouthopen = 0; }
+                
+			} else if(sound[soundhead - 1] <= 0){
+				if(sound[soundhead - 1] < -0.25f) { mouthopen = 1; } else { mouthopen = 0; }
+			}
+		}
+		//SoundEventHappened( framesr, in, 0, channelin );
+	}
+}
+
+
+struct CNFADriver * cnfa;
 
 //int __dso_handle;
 //states
@@ -551,6 +618,42 @@ void DrawFigure( int x, int y, size_t tick ) {
     //CNFGColor(0xffffffff);
     //CNFGTackPixel(x +  numx, y + numy);
 }
+
+void closem(){
+    mouth = closed;
+}
+
+void openm(){
+    int moustate = rand() % 5;
+    switch(moustate){
+        case 0: 
+        {
+            mouth = AEI;
+            break;
+        }
+        case 1: 
+        {
+            mouth = O;
+            break;
+        }
+        case 2: 
+        {
+            mouth = Ee;
+            break;
+        }
+        case 3: 
+        {
+            mouth = RW;
+            break;
+        }
+        case 4: 
+        {
+            mouth = QW;
+            break;
+        }
+    }
+}
+
 void HandleKey( int keycode, int bDown ) {
     if( keycode == 65307 ) exit( 0 );
     if( keycode == 97 ) mouth = AEI;
@@ -594,8 +697,21 @@ void HandleDestroy() { }
 
 int main(void)
 { 
-    
-    
+    srand(time(NULL));
+    cnfa = CNFAInit( 
+                    // "PULSE",
+                    "ALSA", //You can select a plaback driver, or use 0 for default.
+                    //0, //default
+                    "cnfa_example", Callback, 
+                    44100, //Requested samplerate for playback
+                    44100, //Requested samplerate for recording
+                    2, //Number of playback channels.
+                    2, //Number of record channels.
+                    1024, //Buffer size in frames.
+                    0, //Could be a string, for the selected input device - but 0 means default.
+                    0,  //Could be a string, for the selected output device - but 0 means default.
+                    0 // 'opaque' value if the driver wanted it.
+                    );
     scale = 1.0f;
     eyesclosed = false;
     
@@ -639,11 +755,11 @@ int main(void)
         DrawFigure(mx - offset,my - offset,tick);
         oldmx = mx;
         oldmy = my;
-        
+        (mouthopen) ? openm() : closem();
         //Display the image and wait for time to display next frame.
         CNFGSwapBuffers();
         
-        //usleep(100000);
+        usleep(30000);
     }
     
     
